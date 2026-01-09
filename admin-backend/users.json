@@ -1,0 +1,52 @@
+{
+  "users": [
+    {
+      "id": "user_1767980645495",
+      "name": "ESP32 S3 Super mini",
+      "mcpEndpoint": "wss://api.xiaozhi.me/mcp/?token=eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwNzY0OSwiYWdlbnRJZCI6ODk5OTc5LCJlbmRwb2ludElkIjoiYWdlbnRfODk5OTc5IiwicHVycG9zZSI6Im1jcC1lbmRwb2ludCIsImlhdCI6MTc2Nzk4MDY5NywiZXhwIjoxNzk5NTM4Mjk3fQ.slL8gwnxhZC3e9atUH-GDC8iwDJdqMpEVK5WsDZyW9qsfcMHXxt7S_hjdg0rFgMJjwYoFGauI8tcAYjb04Wjig",
+      "braveEnabled": false,
+      "braveApiKey": "",
+      "weatherEnabled": false,
+      "feeds": [],
+      "status": "stopped",
+      "pid": null,
+      "createdAt": "2026-01-09T17:44:05.495Z"
+    },
+    {
+      "id": "user_1767980804055",
+      "name": "ESP32 S3",
+      "mcpEndpoint": "wss://api.xiaozhi.me/mcp/?token=eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwNzY0OSwiYWdlbnRJZCI6ODQyNjU3LCJlbmRwb2ludElkIjoiYWdlbnRfODQyNjU3IiwicHVycG9zZSI6Im1jcC1lbmRwb2ludCIsImlhdCI6MTc2Nzk4MDc3MiwiZXhwIjoxNzk5NTM4MzcyfQ.vnrrvYEpCajbk6a8hCsuS4CXyWzUevqphAEn3QPpy49naJH58KPJldfkLRgZNELUkCpt3CRU2jMekW0aXabxbw",
+      "braveEnabled": false,
+      "braveApiKey": "",
+      "weatherEnabled": false,
+      "feeds": [],
+      "status": "stopped",
+      "pid": null,
+      "createdAt": "2026-01-09T17:46:44.055Z"
+    },
+    {
+      "id": "user_1767980851386",
+      "name": "Eva",
+      "mcpEndpoint": "wss://api.xiaozhi.me/mcp/?token=eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwNzY0OSwiYWdlbnRJZCI6MTAxOTI0MSwiZW5kcG9pbnRJZCI6ImFnZW50XzEwMTkyNDEiLCJwdXJwb3NlIjoibWNwLWVuZHBvaW50IiwiaWF0IjoxNzY3OTgwODM1LCJleHAiOjE3OTk1Mzg0MzV9.cQ7Cz0Q2AHZEGm6R0nPJglKeQ032jCXedtGFst2DT1Fmo9HoNmtKyeELNtgK6GeUpN372JFzksEh4EKsPg6eGw",
+      "braveEnabled": false,
+      "braveApiKey": "",
+      "weatherEnabled": false,
+      "feeds": [],
+      "status": "stopped",
+      "pid": null,
+      "createdAt": "2026-01-09T17:47:31.386Z"
+    },
+    {
+      "id": "user_1767981127169",
+      "name": "Gundam",
+      "mcpEndpoint": "wss://api.xiaozhi.me/mcp/?token=eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjY5NzkxNSwiYWdlbnRJZCI6MTE2MjI5NCwiZW5kcG9pbnRJZCI6ImFnZW50XzExNjIyOTQiLCJwdXJwb3NlIjoibWNwLWVuZHBvaW50IiwiaWF0IjoxNzY3OTgxMDk2LCJleHAiOjE3OTk1Mzg2OTZ9.slNtvScfdjPg8uusM26c_Gx7eiwjVBDKn33Nv8Bt5yztULFpcij2eGg_KUisZN6JGj4e_-MJZsbkEc03ySY85g",
+      "braveEnabled": false,
+      "braveApiKey": "",
+      "weatherEnabled": true,
+      "feeds": [],
+      "status": "stopped",
+      "pid": null,
+      "createdAt": "2026-01-09T17:52:07.169Z"
+    }
+  ]
+}

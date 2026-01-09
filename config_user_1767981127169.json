@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "weather": {
+      "command": "C:\\Users\\Administrator\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+      "args": [
+        "weather-server.py"
+      ],
+      "transport": "stdio"
+    },
+    "rss-news": {
+      "command": "C:\\Users\\Administrator\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+      "args": [
+        "rss-server.py",
+        "--user",
+        "user_1767981127169"
+      ],
+      "transport": "stdio"
+    }
+  }
+}

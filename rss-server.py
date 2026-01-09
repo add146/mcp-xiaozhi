@@ -1,6 +1,6 @@
 """
 RSS MCP Server - Provides RSS tools for Xiaozhi
-Tools: rss_latest_news, rss_feed_list, rss_by_category
+Each configured feed appears as a separate tool in Enabled Services
 """
 import json
 import os
@@ -31,125 +31,117 @@ def load_feeds():
     ]
 
 
+def fetch_feed_articles(url: str, limit: int = 10) -> list:
+    """Fetch articles from a single feed"""
+    try:
+        feed = feedparser.parse(url)
+        articles = []
+        for entry in feed.entries[:limit]:
+            articles.append({
+                'title': entry.get('title', 'No title'),
+                'link': entry.get('link', ''),
+                'published': entry.get('published', 'Unknown date')
+            })
+        return articles
+    except Exception as e:
+        return []
+
+
+# Create a tool for each feed dynamically
+feeds = load_feeds()
+
+for feed_config in feeds:
+    feed_title = feed_config['title']
+    feed_url = feed_config['url']
+    feed_category = feed_config.get('category', 'News')
+    
+    # Create safe function name from title
+    safe_name = feed_title.lower().replace(' ', '_').replace('-', '_')
+    safe_name = ''.join(c for c in safe_name if c.isalnum() or c == '_')
+    tool_name = f"feed_{safe_name}"
+    
+    # Create the tool function
+    def create_feed_tool(title, url, category):
+        def feed_tool(limit: int = 10) -> str:
+            f"""
+            Get latest news from {title}.
+            Category: {category}
+            
+            Args:
+                limit: Maximum number of articles (default 10, max 20)
+            
+            Returns:
+                Latest articles from {title}
+            """
+            limit = min(max(limit, 1), 20)
+            articles = fetch_feed_articles(url, limit)
+            
+            if not articles:
+                return f"Could not fetch articles from {title}"
+            
+            result = f"📰 {title} ({len(articles)} articles):\n\n"
+            for i, article in enumerate(articles, 1):
+                result += f"{i}. **{article['title']}**\n"
+                result += f"   {article['link']}\n\n"
+            
+            return result
+        
+        feed_tool.__name__ = f"feed_{title.lower().replace(' ', '_')}"
+        feed_tool.__doc__ = f"Get latest news from {title}. Category: {category}"
+        return feed_tool
+    
+    # Register the tool
+    tool_func = create_feed_tool(feed_title, feed_url, feed_category)
+    mcp.tool(name=tool_name, description=f"Get news from {feed_title} ({feed_category})")(tool_func)
+
+
 @mcp.tool()
-def rss_latest_news(limit: int = 10) -> str:
+def rss_all_feeds(limit: int = 5) -> str:
     """
-    Get latest news from all configured RSS feeds.
+    Get latest news from ALL configured RSS feeds.
     
     Args:
-        limit: Maximum number of articles to return (default 10, max 30)
+        limit: Number of articles per feed (default 5)
     
     Returns:
-        Latest news articles from all feeds
+        Latest articles from all feeds
     """
-    limit = min(max(limit, 1), 30)
     feeds = load_feeds()
     all_articles = []
     
     for feed_config in feeds:
-        try:
-            feed = feedparser.parse(feed_config['url'])
-            for entry in feed.entries[:5]:  # Max 5 per feed
-                all_articles.append({
-                    'title': entry.get('title', 'No title'),
-                    'link': entry.get('link', ''),
-                    'source': feed_config['title'],
-                    'published': entry.get('published', 'Unknown date')
-                })
-        except Exception as e:
-            continue
+        articles = fetch_feed_articles(feed_config['url'], limit)
+        for article in articles:
+            article['source'] = feed_config['title']
+            all_articles.append(article)
     
-    # Sort by date and limit
-    articles = all_articles[:limit]
+    if not all_articles:
+        return "No articles found from any feed."
     
-    if not articles:
-        return "No articles found. Please add RSS feeds via the admin panel."
-    
-    result = f"📰 Latest {len(articles)} News:\n\n"
-    for i, article in enumerate(articles, 1):
-        result += f"{i}. **{article['title']}**\n"
-        result += f"   Source: {article['source']}\n"
-        result += f"   Link: {article['link']}\n\n"
+    result = f"📰 All Feeds ({len(all_articles)} articles):\n\n"
+    for i, article in enumerate(all_articles[:limit*len(feeds)], 1):
+        result += f"{i}. [{article['source']}] **{article['title']}**\n"
+        result += f"   {article['link']}\n\n"
     
     return result
 
 
 @mcp.tool()
-def rss_feed_list() -> str:
+def rss_list_sources() -> str:
     """
-    List all configured RSS feeds.
+    List all configured RSS feed sources.
     
     Returns:
-        List of all RSS feeds with their categories
+        List of all RSS feeds with their names and categories
     """
     feeds = load_feeds()
     
     if not feeds:
-        return "No RSS feeds configured. Please add feeds via the admin panel at http://localhost:3000"
+        return "No RSS feeds configured. Add feeds via admin panel at http://localhost:3000"
     
-    result = "📋 Configured RSS Feeds:\n\n"
-    
-    # Group by category
-    categories = {}
+    result = "📋 Available RSS Sources:\n\n"
     for feed in feeds:
-        cat = feed.get('category', 'Uncategorized')
-        if cat not in categories:
-            categories[cat] = []
-        categories[cat].append(feed)
-    
-    for category, cat_feeds in categories.items():
-        result += f"**{category}:**\n"
-        for feed in cat_feeds:
-            result += f"  • {feed['title']} ({feed['url']})\n"
-        result += "\n"
-    
-    return result
-
-
-@mcp.tool()
-def rss_by_category(category: str, limit: int = 10) -> str:
-    """
-    Get news from a specific category.
-    
-    Args:
-        category: Category name (e.g., 'Tech', 'News', 'Business')
-        limit: Maximum number of articles (default 10)
-    
-    Returns:
-        News articles from feeds in the specified category
-    """
-    limit = min(max(limit, 1), 20)
-    feeds = load_feeds()
-    
-    # Filter feeds by category
-    matching_feeds = [f for f in feeds if category.lower() in f.get('category', '').lower()]
-    
-    if not matching_feeds:
-        return f"No feeds found in category '{category}'. Available categories: " + \
-               ", ".join(set(f.get('category', 'Uncategorized') for f in feeds))
-    
-    articles = []
-    for feed_config in matching_feeds:
-        try:
-            feed = feedparser.parse(feed_config['url'])
-            for entry in feed.entries[:limit]:
-                articles.append({
-                    'title': entry.get('title', 'No title'),
-                    'link': entry.get('link', ''),
-                    'source': feed_config['title']
-                })
-        except:
-            continue
-    
-    articles = articles[:limit]
-    
-    if not articles:
-        return f"No articles found in category '{category}'"
-    
-    result = f"📰 {category} News ({len(articles)} articles):\n\n"
-    for i, article in enumerate(articles, 1):
-        result += f"{i}. **{article['title']}**\n"
-        result += f"   Source: {article['source']} | {article['link']}\n\n"
+        result += f"• **{feed['title']}** ({feed.get('category', 'General')})\n"
     
     return result
 

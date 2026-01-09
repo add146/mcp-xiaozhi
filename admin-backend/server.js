@@ -2,60 +2,384 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+const { spawn, exec } = require('child_process');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 const app = express();
 const PORT = 3000;
-const CONFIG_PATH = path.join(__dirname, 'config.json');
+const JWT_SECRET = 'mcp-admin-secret-key-change-in-production';
+const ADMIN_PATH = path.join(__dirname, 'admin.json');
+const USERS_PATH = path.join(__dirname, 'users.json');
+const PYTHON_PATH = 'C:\\Users\\Administrator\\AppData\\Local\\Programs\\Python\\Python313\\python.exe';
+const BRIDGE_PATH = path.join(__dirname, '..');
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// Helper functions
-function readConfig() {
+// ============ Helper Functions ============
+
+function readAdmin() {
     try {
-        const data = fs.readFileSync(CONFIG_PATH, 'utf8');
-        return JSON.parse(data);
-    } catch (error) {
-        return { braveApiKey: '', mcpEndpoint: '', feeds: [] };
+        return JSON.parse(fs.readFileSync(ADMIN_PATH, 'utf8'));
+    } catch {
+        // Default admin: admin/admin123
+        const defaultAdmin = {
+            username: 'admin',
+            passwordHash: bcrypt.hashSync('admin123', 10)
+        };
+        fs.writeFileSync(ADMIN_PATH, JSON.stringify(defaultAdmin, null, 2));
+        return defaultAdmin;
     }
 }
 
-function writeConfig(config) {
-    fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
+function readUsers() {
+    try {
+        return JSON.parse(fs.readFileSync(USERS_PATH, 'utf8'));
+    } catch {
+        const defaultUsers = { users: [] };
+        fs.writeFileSync(USERS_PATH, JSON.stringify(defaultUsers, null, 2));
+        return defaultUsers;
+    }
 }
 
-// API Routes
-app.get('/api/config', (req, res) => {
-    const config = readConfig();
-    res.json({
-        braveApiKey: config.braveApiKey || '',
-        mcpEndpoint: config.mcpEndpoint || ''
+function writeUsers(data) {
+    fs.writeFileSync(USERS_PATH, JSON.stringify(data, null, 2));
+}
+
+// ============ Auth Middleware ============
+
+function authMiddleware(req, res, next) {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+        return res.status(401).json({ error: 'No token provided' });
+    }
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        req.admin = decoded;
+        next();
+    } catch {
+        return res.status(401).json({ error: 'Invalid token' });
+    }
+}
+
+// ============ Bridge Process Management ============
+
+const bridgeProcesses = {}; // userId -> { process, pid }
+
+function generateUserConfig(user) {
+    const configPath = path.join(BRIDGE_PATH, `config_${user.id}.json`);
+    const mcpServers = {};
+
+    // Brave Search (if enabled and has API key)
+    if (user.braveEnabled && user.braveApiKey) {
+        mcpServers['brave-search'] = {
+            url: 'http://localhost:8080/sse',
+            transport: 'sse'
+        };
+    }
+
+    // Weather (if enabled)
+    if (user.weatherEnabled) {
+        mcpServers['weather'] = {
+            command: PYTHON_PATH,
+            args: ['weather-server.py'],
+            transport: 'stdio'
+        };
+    }
+
+    // RSS (always enabled, per-user feeds)
+    mcpServers['rss-news'] = {
+        command: PYTHON_PATH,
+        args: ['rss-server.py', '--user', user.id],
+        transport: 'stdio'
+    };
+
+    fs.writeFileSync(configPath, JSON.stringify({ mcpServers }, null, 2));
+    return configPath;
+}
+
+function killUserBridge(userId) {
+    return new Promise((resolve) => {
+        if (bridgeProcesses[userId]) {
+            try {
+                bridgeProcesses[userId].process.kill('SIGKILL');
+            } catch { }
+            delete bridgeProcesses[userId];
+        }
+
+        // Also kill by command line pattern
+        exec(`wmic process where "commandline like '%config_${userId}%'" call terminate`, () => {
+            resolve();
+        });
     });
+}
+
+async function startUserBridge(user) {
+    await killUserBridge(user.id);
+
+    if (!user.mcpEndpoint) {
+        console.log(`[${user.name}] No MCP endpoint, skipping`);
+        return false;
+    }
+
+    const configPath = generateUserConfig(user);
+
+    console.log(`[${user.name}] Starting bridge...`);
+
+    const proc = spawn(PYTHON_PATH, ['mcp-pipe.py', 'mcp-bridge.py'], {
+        cwd: BRIDGE_PATH,
+        env: {
+            ...process.env,
+            MCP_ENDPOINT: user.mcpEndpoint,
+            CONFIG_PATH: configPath,
+            BRAVE_API_KEY: user.braveApiKey || ''
+        },
+        detached: false,
+        stdio: 'inherit'
+    });
+
+    bridgeProcesses[user.id] = { process: proc, pid: proc.pid };
+
+    proc.on('exit', (code) => {
+        console.log(`[${user.name}] Bridge exited with code ${code}`);
+        delete bridgeProcesses[user.id];
+
+        // Update user status
+        const data = readUsers();
+        const idx = data.users.findIndex(u => u.id === user.id);
+        if (idx !== -1) {
+            data.users[idx].status = 'stopped';
+            data.users[idx].pid = null;
+            writeUsers(data);
+        }
+    });
+
+    // Update user status
+    const data = readUsers();
+    const idx = data.users.findIndex(u => u.id === user.id);
+    if (idx !== -1) {
+        data.users[idx].status = 'running';
+        data.users[idx].pid = proc.pid;
+        writeUsers(data);
+    }
+
+    return true;
+}
+
+// ============ Auth Routes ============
+
+app.post('/api/login', (req, res) => {
+    const { username, password } = req.body;
+    const admin = readAdmin();
+
+    if (username !== admin.username) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    if (!bcrypt.compareSync(password, admin.passwordHash)) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: '24h' });
+    res.json({ success: true, token });
 });
 
-app.post('/api/config', (req, res) => {
-    const config = readConfig();
-    const { braveApiKey, mcpEndpoint } = req.body;
+app.post('/api/change-password', authMiddleware, (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+    const admin = readAdmin();
 
-    if (braveApiKey !== undefined) config.braveApiKey = braveApiKey;
-    if (mcpEndpoint !== undefined) config.mcpEndpoint = mcpEndpoint;
+    if (!bcrypt.compareSync(currentPassword, admin.passwordHash)) {
+        return res.status(401).json({ error: 'Current password incorrect' });
+    }
 
-    writeConfig(config);
-    res.json({ success: true, message: 'Configuration saved!' });
+    admin.passwordHash = bcrypt.hashSync(newPassword, 10);
+    fs.writeFileSync(ADMIN_PATH, JSON.stringify(admin, null, 2));
+
+    res.json({ success: true, message: 'Password changed' });
 });
 
-app.get('/api/feeds', (req, res) => {
-    const config = readConfig();
-    res.json(config.feeds || []);
+app.get('/api/profile', authMiddleware, (req, res) => {
+    const admin = readAdmin();
+    res.json({ username: admin.username });
 });
 
-app.post('/api/feeds', (req, res) => {
-    const config = readConfig();
+app.post('/api/change-username', authMiddleware, (req, res) => {
+    const { newUsername, password } = req.body;
+    const admin = readAdmin();
+
+    if (!bcrypt.compareSync(password, admin.passwordHash)) {
+        return res.status(401).json({ error: 'Password incorrect' });
+    }
+
+    admin.username = newUsername;
+    fs.writeFileSync(ADMIN_PATH, JSON.stringify(admin, null, 2));
+
+    // Generate new token with new username
+    const token = jwt.sign({ username: newUsername }, JWT_SECRET, { expiresIn: '24h' });
+    res.json({ success: true, message: 'Username changed', token });
+});
+
+// ============ User Management Routes ============
+
+app.get('/api/users', authMiddleware, (req, res) => {
+    const data = readUsers();
+    // Return users without sensitive data
+    const users = data.users.map(u => ({
+        ...u,
+        braveApiKey: u.braveApiKey ? '***' : ''
+    }));
+    res.json(users);
+});
+
+app.post('/api/users', authMiddleware, (req, res) => {
+    const data = readUsers();
+    const { name, mcpEndpoint, braveEnabled, braveApiKey, weatherEnabled, feeds } = req.body;
+
+    if (!name) {
+        return res.status(400).json({ error: 'Name is required' });
+    }
+
+    const newUser = {
+        id: `user_${Date.now()}`,
+        name,
+        mcpEndpoint: mcpEndpoint || '',
+        braveEnabled: braveEnabled || false,
+        braveApiKey: braveApiKey || '',
+        weatherEnabled: weatherEnabled || false,
+        feeds: feeds || [],
+        status: 'stopped',
+        pid: null,
+        createdAt: new Date().toISOString()
+    };
+
+    data.users.push(newUser);
+    writeUsers(data);
+
+    res.json({ success: true, user: newUser });
+});
+
+app.get('/api/users/:id', authMiddleware, (req, res) => {
+    const data = readUsers();
+    const user = data.users.find(u => u.id === req.params.id);
+
+    if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json(user);
+});
+
+app.put('/api/users/:id', authMiddleware, async (req, res) => {
+    const data = readUsers();
+    const idx = data.users.findIndex(u => u.id === req.params.id);
+
+    if (idx === -1) {
+        return res.status(404).json({ error: 'User not found' });
+    }
+
+    const { name, mcpEndpoint, braveEnabled, braveApiKey, weatherEnabled, feeds } = req.body;
+
+    if (name !== undefined) data.users[idx].name = name;
+    if (mcpEndpoint !== undefined) data.users[idx].mcpEndpoint = mcpEndpoint;
+    if (braveEnabled !== undefined) data.users[idx].braveEnabled = braveEnabled;
+    if (braveApiKey !== undefined) data.users[idx].braveApiKey = braveApiKey;
+    if (weatherEnabled !== undefined) data.users[idx].weatherEnabled = weatherEnabled;
+    if (feeds !== undefined) data.users[idx].feeds = feeds;
+
+    writeUsers(data);
+
+    // Restart bridge if running
+    if (data.users[idx].status === 'running') {
+        await startUserBridge(data.users[idx]);
+    }
+
+    res.json({ success: true, user: data.users[idx] });
+});
+
+app.delete('/api/users/:id', authMiddleware, async (req, res) => {
+    const data = readUsers();
+    const idx = data.users.findIndex(u => u.id === req.params.id);
+
+    if (idx === -1) {
+        return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Stop bridge first
+    await killUserBridge(req.params.id);
+
+    // Remove config file
+    const configPath = path.join(BRIDGE_PATH, `config_${req.params.id}.json`);
+    try { fs.unlinkSync(configPath); } catch { }
+
+    data.users.splice(idx, 1);
+    writeUsers(data);
+
+    res.json({ success: true, message: 'User deleted' });
+});
+
+// ============ Bridge Control Routes ============
+
+app.post('/api/users/:id/start', authMiddleware, async (req, res) => {
+    const data = readUsers();
+    const user = data.users.find(u => u.id === req.params.id);
+
+    if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (!user.mcpEndpoint) {
+        return res.status(400).json({ error: 'MCP Endpoint required' });
+    }
+
+    await startUserBridge(user);
+    res.json({ success: true, message: `Bridge started for ${user.name}` });
+});
+
+app.post('/api/users/:id/stop', authMiddleware, async (req, res) => {
+    const data = readUsers();
+    const user = data.users.find(u => u.id === req.params.id);
+
+    if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+    }
+
+    await killUserBridge(user.id);
+
+    // Update status
+    const idx = data.users.findIndex(u => u.id === req.params.id);
+    data.users[idx].status = 'stopped';
+    data.users[idx].pid = null;
+    writeUsers(data);
+
+    res.json({ success: true, message: `Bridge stopped for ${user.name}` });
+});
+
+// ============ User Feed Routes ============
+
+app.get('/api/users/:id/feeds', authMiddleware, (req, res) => {
+    const data = readUsers();
+    const user = data.users.find(u => u.id === req.params.id);
+
+    if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json(user.feeds || []);
+});
+
+app.post('/api/users/:id/feeds', authMiddleware, (req, res) => {
+    const data = readUsers();
+    const idx = data.users.findIndex(u => u.id === req.params.id);
+
+    if (idx === -1) {
+        return res.status(404).json({ error: 'User not found' });
+    }
+
     const { title, url, category } = req.body;
-
     if (!title || !url) {
-        return res.status(400).json({ error: 'Title and URL are required' });
+        return res.status(400).json({ error: 'Title and URL required' });
     }
 
     const newFeed = {
@@ -65,69 +389,30 @@ app.post('/api/feeds', (req, res) => {
         category: category || 'Uncategorized'
     };
 
-    config.feeds = config.feeds || [];
-    config.feeds.push(newFeed);
-    writeConfig(config);
+    data.users[idx].feeds = data.users[idx].feeds || [];
+    data.users[idx].feeds.push(newFeed);
+    writeUsers(data);
 
     res.json({ success: true, feed: newFeed });
 });
 
-app.delete('/api/feeds/:id', (req, res) => {
-    const config = readConfig();
-    const { id } = req.params;
+app.delete('/api/users/:id/feeds/:feedId', authMiddleware, (req, res) => {
+    const data = readUsers();
+    const idx = data.users.findIndex(u => u.id === req.params.id);
 
-    config.feeds = (config.feeds || []).filter(f => f.id !== id);
-    writeConfig(config);
-
-    res.json({ success: true, message: 'Feed deleted!' });
-});
-
-app.put('/api/feeds/:id', (req, res) => {
-    const config = readConfig();
-    const { id } = req.params;
-    const { title, url, category } = req.body;
-
-    const feedIndex = config.feeds.findIndex(f => f.id === id);
-    if (feedIndex === -1) {
-        return res.status(404).json({ error: 'Feed not found' });
+    if (idx === -1) {
+        return res.status(404).json({ error: 'User not found' });
     }
 
-    config.feeds[feedIndex] = { ...config.feeds[feedIndex], title, url, category };
-    writeConfig(config);
+    data.users[idx].feeds = (data.users[idx].feeds || []).filter(f => f.id !== req.params.feedId);
+    writeUsers(data);
 
-    res.json({ success: true, feed: config.feeds[feedIndex] });
+    res.json({ success: true, message: 'Feed deleted' });
 });
 
-// Export OPML
-app.get('/api/export/opml', (req, res) => {
-    const config = readConfig();
-    const feeds = config.feeds || [];
-
-    let opml = `<?xml version="1.0" encoding="UTF-8"?>
-<opml version="2.0">
-  <head>
-    <title>MCP RSS Feeds</title>
-  </head>
-  <body>
-`;
-
-    const categories = [...new Set(feeds.map(f => f.category))];
-    categories.forEach(cat => {
-        opml += `    <outline text="${cat}" title="${cat}">\n`;
-        feeds.filter(f => f.category === cat).forEach(feed => {
-            opml += `      <outline type="rss" text="${feed.title}" title="${feed.title}" xmlUrl="${feed.url}" />\n`;
-        });
-        opml += `    </outline>\n`;
-    });
-
-    opml += `  </body>
-</opml>`;
-
-    res.setHeader('Content-Type', 'application/xml');
-    res.setHeader('Content-Disposition', 'attachment; filename=feeds.opml');
-    res.send(opml);
-});
+// ============ Start Server ============
 
 app.listen(PORT, () => {
     console.log(`MCP Admin Backend running at http://localhost:${PORT}`);
+    console.log('Default admin login: admin / admin123');
 });

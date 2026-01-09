@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,50 +16,162 @@
       --text-muted: #94a3b8;
       --success: #22c55e;
       --danger: #ef4444;
+      --warning: #f59e0b;
       --border: #333355;
     }
-    
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
       font-family: 'Segoe UI', system-ui, sans-serif;
       background: linear-gradient(135deg, var(--bg-dark) 0%, #1a1a3e 100%);
       color: var(--text);
       min-height: 100vh;
+    }
+
+    /* Login Page */
+    .login-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
       padding: 2rem;
     }
-    
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
+
+    .login-box {
+      background: var(--bg-card);
+      padding: 2rem;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      width: 100%;
+      max-width: 400px;
     }
-    
-    header {
+
+    .login-box h1 {
       text-align: center;
-      margin-bottom: 2rem;
+      margin-bottom: 1.5rem;
+      font-size: 1.5rem;
     }
-    
-    header h1 {
-      font-size: 2.5rem;
-      background: linear-gradient(135deg, var(--accent), #a855f7);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin-bottom: 0.5rem;
+
+    /* Main Layout */
+    .app-container {
+      display: none;
+      height: 100vh;
     }
-    
-    header p {
+
+    .app-container.active {
+      display: flex;
+    }
+
+    .sidebar {
+      width: 280px;
+      background: var(--bg-card);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sidebar-header h2 {
+      font-size: 1.25rem;
+    }
+
+    .sidebar-header p {
       color: var(--text-muted);
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
     }
-    
+
+    .user-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+    }
+
+    .user-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 1rem;
+      background: var(--bg-input);
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .user-item:hover {
+      border-color: var(--accent);
+    }
+
+    .user-item.active {
+      border-color: var(--accent);
+      background: rgba(99, 102, 241, 0.1);
+    }
+
+    .user-item .name {
+      font-weight: 500;
+    }
+
+    .user-item .status {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+    }
+
+    .user-item .status.running {
+      background: var(--success);
+      color: white;
+    }
+
+    .user-item .status.stopped {
+      background: var(--text-muted);
+      color: white;
+    }
+
+    .add-user-btn {
+      margin: 1rem;
+      padding: 0.75rem;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    .add-user-btn:hover {
+      background: var(--accent-hover);
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 2rem;
+    }
+
+    .main-content h1 {
+      margin-bottom: 1.5rem;
+    }
+
     .card {
       background: var(--bg-card);
       border-radius: 16px;
       padding: 1.5rem;
       margin-bottom: 1.5rem;
       border: 1px solid var(--border);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
     }
-    
+
     .card h2 {
       font-size: 1.25rem;
       margin-bottom: 1rem;
@@ -66,7 +179,7 @@
       align-items: center;
       gap: 0.5rem;
     }
-    
+
     .card h2::before {
       content: '';
       width: 4px;
@@ -74,19 +187,20 @@
       background: var(--accent);
       border-radius: 2px;
     }
-    
+
     .form-group {
       margin-bottom: 1rem;
     }
-    
+
     label {
       display: block;
       margin-bottom: 0.5rem;
       color: var(--text-muted);
       font-size: 0.875rem;
     }
-    
-    input, select {
+
+    input,
+    select {
       width: 100%;
       padding: 0.75rem 1rem;
       background: var(--bg-input);
@@ -94,15 +208,14 @@
       border-radius: 8px;
       color: var(--text);
       font-size: 1rem;
-      transition: border-color 0.2s, box-shadow 0.2s;
     }
-    
-    input:focus, select:focus {
+
+    input:focus,
+    select:focus {
       outline: none;
       border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
     }
-    
+
     button {
       padding: 0.75rem 1.5rem;
       border: none;
@@ -110,89 +223,114 @@
       font-size: 1rem;
       cursor: pointer;
       transition: all 0.2s;
-      font-weight: 500;
     }
-    
+
     .btn-primary {
       background: var(--accent);
       color: white;
     }
-    
+
     .btn-primary:hover {
       background: var(--accent-hover);
-      transform: translateY(-1px);
     }
-    
+
+    .btn-success {
+      background: var(--success);
+      color: white;
+    }
+
     .btn-danger {
       background: var(--danger);
       color: white;
-      padding: 0.5rem 1rem;
-      font-size: 0.875rem;
     }
-    
-    .btn-danger:hover {
-      background: #dc2626;
-    }
-    
+
     .btn-secondary {
       background: var(--bg-input);
       color: var(--text);
       border: 1px solid var(--border);
     }
-    
-    .btn-secondary:hover {
-      background: var(--border);
-    }
-    
-    .feed-list {
+
+    .actions {
       display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
     }
-    
-    .feed-item {
+
+    .toggle-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding: 1rem;
       background: var(--bg-input);
       border-radius: 8px;
-      border: 1px solid var(--border);
+      margin-bottom: 0.5rem;
     }
-    
-    .feed-info h3 {
-      font-size: 1rem;
-      margin-bottom: 0.25rem;
+
+    .toggle-switch {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
     }
-    
-    .feed-info p {
+
+    .toggle-switch input {
+      display: none;
+    }
+
+    .toggle-slider {
+      width: 44px;
+      height: 24px;
+      background: var(--border);
+      border-radius: 12px;
+      position: relative;
+      transition: all 0.3s;
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      background: var(--text-muted);
+      border-radius: 50%;
+      top: 3px;
+      left: 3px;
+      transition: all 0.3s;
+    }
+
+    .toggle-switch input:checked+.toggle-slider {
+      background: var(--accent);
+    }
+
+    .toggle-switch input:checked+.toggle-slider::before {
+      transform: translateX(20px);
+      background: white;
+    }
+
+    .feed-list {
+      margin-top: 1rem;
+    }
+
+    .feed-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 1rem;
+      background: var(--bg-input);
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+    }
+
+    .feed-item .title {
+      font-weight: 500;
+    }
+
+    .feed-item .url {
       font-size: 0.75rem;
       color: var(--text-muted);
     }
-    
-    .feed-category {
-      display: inline-block;
-      padding: 0.25rem 0.5rem;
-      background: var(--accent);
-      border-radius: 4px;
-      font-size: 0.75rem;
-      margin-top: 0.25rem;
-    }
-    
-    .add-feed-form {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr auto;
-      gap: 0.75rem;
-      align-items: end;
-      margin-bottom: 1rem;
-    }
-    
-    @media (max-width: 768px) {
-      .add-feed-form {
-        grid-template-columns: 1fr;
-      }
-    }
-    
+
     .toast {
       position: fixed;
       bottom: 2rem;
@@ -206,212 +344,542 @@
       transition: all 0.3s;
       z-index: 1000;
     }
-    
+
     .toast.show {
       opacity: 1;
       transform: translateY(0);
     }
-    
-    .status-connected {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-muted);
+    }
+
+    .logout-btn {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
       padding: 0.5rem 1rem;
-      background: rgba(34, 197, 94, 0.2);
-      border: 1px solid var(--success);
-      border-radius: 8px;
-      color: var(--success);
       font-size: 0.875rem;
-      margin-top: 1rem;
     }
-    
-    .status-connected::before {
-      content: '';
-      width: 8px;
-      height: 8px;
-      background: var(--success);
-      border-radius: 50%;
-      animation: pulse 2s infinite;
-    }
-    
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
-    
-    .actions {
+
+    .header-btns {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
       display: flex;
       gap: 0.5rem;
-      margin-top: 1rem;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal-box {
+      background: var(--bg-card);
+      padding: 2rem;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .modal-box h2 {
+      margin-bottom: 1.5rem;
+    }
+
+    .modal-close {
+      float: right;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.5rem;
+      cursor: pointer;
     }
   </style>
 </head>
+
 <body>
-  <div class="container">
-    <header>
+  <!-- Login Page -->
+  <div class="login-container" id="loginPage">
+    <div class="login-box">
       <h1>🤖 MCP Admin Panel</h1>
-      <p>Configure your Xiaozhi MCP Bridge</p>
-    </header>
-    
-    <div class="card">
-      <h2>API Configuration</h2>
       <div class="form-group">
-        <label for="braveApiKey">Brave Search API Key</label>
-        <input type="password" id="braveApiKey" placeholder="Enter your Brave API key...">
+        <label>Username</label>
+        <input type="text" id="loginUsername" placeholder="admin">
       </div>
       <div class="form-group">
-        <label for="mcpEndpoint">Xiaozhi MCP Endpoint URL</label>
-        <input type="text" id="mcpEndpoint" placeholder="wss://api.xiaozhi.me/mcp/?token=...">
+        <label>Password</label>
+        <input type="password" id="loginPassword" placeholder="••••••••">
       </div>
-      <div class="actions">
-        <button class="btn-primary" onclick="saveConfig()">💾 Save Configuration</button>
-      </div>
-      <div class="status-connected" id="connectionStatus" style="display: none;">
-        Connected to Xiaozhi
-      </div>
+      <button class="btn-primary" style="width:100%" onclick="login()">Login</button>
+      <p id="loginError" style="color:var(--danger);text-align:center;margin-top:1rem;display:none"></p>
     </div>
-    
-    <div class="card">
-      <h2>RSS Feeds</h2>
-      <div class="add-feed-form">
-        <div class="form-group">
-          <label for="feedTitle">Feed Title</label>
-          <input type="text" id="feedTitle" placeholder="e.g. TechCrunch">
-        </div>
-        <div class="form-group">
-          <label for="feedUrl">RSS URL</label>
-          <input type="text" id="feedUrl" placeholder="https://example.com/feed">
-        </div>
-        <div class="form-group">
-          <label for="feedCategory">Category</label>
-          <input type="text" id="feedCategory" placeholder="e.g. Tech News">
-        </div>
-        <button class="btn-primary" onclick="addFeed()">+ Add</button>
+  </div>
+
+  <!-- Profile Modal -->
+  <div class="modal-overlay" id="profileModal">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeProfile()">&times;</button>
+      <h2>👤 Admin Profile</h2>
+
+      <div class="form-group">
+        <label>Current Username</label>
+        <input type="text" id="profileUsername" readonly style="opacity:0.7">
       </div>
-      <div class="feed-list" id="feedList">
-        <!-- Feeds will be loaded here -->
+
+      <h3 style="margin:1.5rem 0 1rem;font-size:1rem;color:var(--text-muted)">Change Username</h3>
+      <div class="form-group">
+        <label>New Username</label>
+        <input type="text" id="newUsername" placeholder="Enter new username">
       </div>
-      <div class="actions">
-        <button class="btn-secondary" onclick="exportOPML()">📥 Export OPML</button>
+      <div class="form-group">
+        <label>Password (to confirm)</label>
+        <input type="password" id="usernamePassword" placeholder="Enter current password">
+      </div>
+      <button class="btn-primary" style="width:100%;margin-bottom:1.5rem" onclick="changeUsername()">Change
+        Username</button>
+
+      <h3 style="margin:1rem 0;font-size:1rem;color:var(--text-muted)">Change Password</h3>
+      <div class="form-group">
+        <label>Current Password</label>
+        <input type="password" id="currentPassword" placeholder="Enter current password">
+      </div>
+      <div class="form-group">
+        <label>New Password</label>
+        <input type="password" id="newPassword" placeholder="Enter new password">
+      </div>
+      <button class="btn-primary" style="width:100%" onclick="changePassword()">Change Password</button>
+    </div>
+  </div>
+
+  <!-- Main App -->
+  <div class="app-container" id="appContainer">
+    <div class="header-btns">
+      <button class="btn-secondary" onclick="openProfile()">👤 Profile</button>
+      <button class="btn-secondary" onclick="logout()">🚪 Logout</button>
+    </div>
+
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h2>🤖 MCP Admin</h2>
+        <p>Multi-User Management</p>
+      </div>
+      <div class="user-list" id="userList">
+        <!-- Users will be loaded here -->
+      </div>
+      <button class="add-user-btn" onclick="showAddUser()">➕ Add User/Device</button>
+    </div>
+
+    <div class="main-content" id="mainContent">
+      <div class="empty-state" id="emptyState">
+        <h2>👈 Select a user/device</h2>
+        <p>Or click "Add User/Device" to create one</p>
+      </div>
+
+      <div id="userEditor" style="display:none">
+        <h1 id="editorTitle">Edit User</h1>
+
+        <div class="card">
+          <h2>Device Info</h2>
+          <div class="form-group">
+            <label>Device Name</label>
+            <input type="text" id="userName" placeholder="e.g. Device Ruang Tamu">
+          </div>
+          <div class="form-group">
+            <label>Xiaozhi MCP Endpoint URL</label>
+            <input type="text" id="userEndpoint" placeholder="wss://api.xiaozhi.me/mcp/?token=...">
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Services</h2>
+          <div class="toggle-row">
+            <span>🔍 Brave Search</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="userBraveEnabled">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="form-group" id="braveKeyGroup" style="display:none;margin-top:0.5rem;">
+            <label>Brave API Key</label>
+            <input type="password" id="userBraveKey" placeholder="Enter Brave API key...">
+          </div>
+          <div class="toggle-row">
+            <span>🌤️ Weather</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="userWeatherEnabled">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>RSS Feeds</h2>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+            <input type="text" id="feedTitle" placeholder="Title" style="flex:1;min-width:120px">
+            <input type="text" id="feedUrl" placeholder="URL" style="flex:2;min-width:200px">
+            <button class="btn-primary" onclick="addFeed()">+ Add</button>
+          </div>
+          <div class="feed-list" id="feedList"></div>
+        </div>
+
+        <div class="actions">
+          <button class="btn-primary" onclick="saveUser()">💾 Save</button>
+          <button class="btn-success" id="startBtn" onclick="startBridge()">▶️ Start</button>
+          <button class="btn-secondary" id="stopBtn" onclick="stopBridge()" style="display:none">⏹️ Stop</button>
+          <button class="btn-danger" onclick="deleteUser()">🗑️ Delete</button>
+        </div>
       </div>
     </div>
   </div>
-  
+
   <div class="toast" id="toast"></div>
-  
+
   <script>
-    const API_URL = '';
-    
-    async function loadConfig() {
+    let token = localStorage.getItem('token');
+    let users = [];
+    let currentUserId = null;
+
+    // ============ Auth ============
+
+    async function login() {
+      const username = document.getElementById('loginUsername').value;
+      const password = document.getElementById('loginPassword').value;
+
       try {
-        const res = await fetch(`${API_URL}/api/config`);
-        const config = await res.json();
-        document.getElementById('braveApiKey').value = config.braveApiKey || '';
-        document.getElementById('mcpEndpoint').value = config.mcpEndpoint || '';
-        
-        if (config.mcpEndpoint) {
-          document.getElementById('connectionStatus').style.display = 'inline-flex';
-        }
-      } catch (error) {
-        console.error('Error loading config:', error);
-      }
-    }
-    
-    async function saveConfig() {
-      const braveApiKey = document.getElementById('braveApiKey').value;
-      const mcpEndpoint = document.getElementById('mcpEndpoint').value;
-      
-      try {
-        const res = await fetch(`${API_URL}/api/config`, {
+        const res = await fetch('/api/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ braveApiKey, mcpEndpoint })
+          body: JSON.stringify({ username, password })
         });
-        const result = await res.json();
-        showToast('Configuration saved successfully!');
-        
-        if (mcpEndpoint) {
-          document.getElementById('connectionStatus').style.display = 'inline-flex';
+        const data = await res.json();
+
+        if (data.success) {
+          token = data.token;
+          localStorage.setItem('token', token);
+          showApp();
+        } else {
+          document.getElementById('loginError').textContent = data.error;
+          document.getElementById('loginError').style.display = 'block';
         }
-      } catch (error) {
-        showToast('Error saving configuration', true);
+      } catch (e) {
+        document.getElementById('loginError').textContent = 'Connection error';
+        document.getElementById('loginError').style.display = 'block';
       }
     }
-    
-    async function loadFeeds() {
-      try {
-        const res = await fetch(`${API_URL}/api/feeds`);
-        const feeds = await res.json();
-        renderFeeds(feeds);
-      } catch (error) {
-        console.error('Error loading feeds:', error);
+
+    function logout() {
+      localStorage.removeItem('token');
+      token = null;
+      location.reload();
+    }
+
+    function showApp() {
+      document.getElementById('loginPage').style.display = 'none';
+      document.getElementById('appContainer').classList.add('active');
+      loadUsers();
+    }
+
+    // ============ Profile ============
+
+    async function openProfile() {
+      const profile = await api('/api/profile');
+      if (profile) {
+        document.getElementById('profileUsername').value = profile.username;
+        document.getElementById('profileModal').classList.add('show');
       }
     }
-    
-    function renderFeeds(feeds) {
-      const list = document.getElementById('feedList');
-      if (feeds.length === 0) {
-        list.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 1rem;">No feeds added yet</p>';
+
+    function closeProfile() {
+      document.getElementById('profileModal').classList.remove('show');
+      document.getElementById('newUsername').value = '';
+      document.getElementById('usernamePassword').value = '';
+      document.getElementById('currentPassword').value = '';
+      document.getElementById('newPassword').value = '';
+    }
+
+    async function changeUsername() {
+      const newUsername = document.getElementById('newUsername').value;
+      const password = document.getElementById('usernamePassword').value;
+
+      if (!newUsername || !password) {
+        showToast('Fill all fields', true);
         return;
       }
-      
-      list.innerHTML = feeds.map(feed => `
-        <div class="feed-item">
-          <div class="feed-info">
-            <h3>${feed.title}</h3>
-            <p>${feed.url}</p>
-            <span class="feed-category">${feed.category}</span>
-          </div>
-          <button class="btn-danger" onclick="deleteFeed('${feed.id}')">🗑️ Delete</button>
+
+      const result = await api('/api/change-username', 'POST', { newUsername, password });
+      if (result?.success) {
+        token = result.token;
+        localStorage.setItem('token', token);
+        showToast('Username changed!');
+        closeProfile();
+        openProfile();
+      } else {
+        showToast(result?.error || 'Error changing username', true);
+      }
+    }
+
+    async function changePassword() {
+      const currentPassword = document.getElementById('currentPassword').value;
+      const newPassword = document.getElementById('newPassword').value;
+
+      if (!currentPassword || !newPassword) {
+        showToast('Fill all fields', true);
+        return;
+      }
+
+      const result = await api('/api/change-password', 'POST', { currentPassword, newPassword });
+      if (result?.success) {
+        showToast('Password changed!');
+        closeProfile();
+      } else {
+        showToast(result?.error || 'Error changing password', true);
+      }
+    }
+
+    // ============ API Helpers ============
+
+    async function api(path, method = 'GET', body = null) {
+      const options = {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      };
+      if (body) options.body = JSON.stringify(body);
+
+      const res = await fetch(path, options);
+      if (res.status === 401) {
+        logout();
+        return null;
+      }
+      return res.json();
+    }
+
+    // ============ Users ============
+
+    async function loadUsers() {
+      users = await api('/api/users') || [];
+      renderUserList();
+    }
+
+    function renderUserList() {
+      const list = document.getElementById('userList');
+      if (users.length === 0) {
+        list.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:2rem">No users yet</p>';
+        return;
+      }
+
+      list.innerHTML = users.map(u => `
+        <div class="user-item ${currentUserId === u.id ? 'active' : ''}" onclick="selectUser('${u.id}')">
+          <span class="name">📱 ${u.name}</span>
+          <span class="status ${u.status}">${u.status}</span>
         </div>
       `).join('');
     }
-    
+
+    async function selectUser(id) {
+      currentUserId = id;
+      renderUserList();
+
+      const user = await api(`/api/users/${id}`);
+      if (!user) return;
+
+      document.getElementById('emptyState').style.display = 'none';
+      document.getElementById('userEditor').style.display = 'block';
+      document.getElementById('editorTitle').textContent = user.name;
+
+      document.getElementById('userName').value = user.name;
+      document.getElementById('userEndpoint').value = user.mcpEndpoint || '';
+      document.getElementById('userBraveEnabled').checked = user.braveEnabled;
+      document.getElementById('userBraveKey').value = user.braveApiKey || '';
+      document.getElementById('userWeatherEnabled').checked = user.weatherEnabled;
+
+      toggleBraveKey();
+      renderFeeds(user.feeds || []);
+      updateButtons(user.status);
+    }
+
+    function showAddUser() {
+      currentUserId = 'new';
+      document.getElementById('emptyState').style.display = 'none';
+      document.getElementById('userEditor').style.display = 'block';
+      document.getElementById('editorTitle').textContent = 'New User/Device';
+
+      document.getElementById('userName').value = '';
+      document.getElementById('userEndpoint').value = '';
+      document.getElementById('userBraveEnabled').checked = false;
+      document.getElementById('userBraveKey').value = '';
+      document.getElementById('userWeatherEnabled').checked = false;
+
+      toggleBraveKey();
+      renderFeeds([]);
+      updateButtons('new');
+
+      renderUserList();
+    }
+
+    async function saveUser() {
+      const data = {
+        name: document.getElementById('userName').value,
+        mcpEndpoint: document.getElementById('userEndpoint').value,
+        braveEnabled: document.getElementById('userBraveEnabled').checked,
+        braveApiKey: document.getElementById('userBraveKey').value,
+        weatherEnabled: document.getElementById('userWeatherEnabled').checked
+      };
+
+      if (!data.name) {
+        showToast('Device name required', true);
+        return;
+      }
+
+      if (currentUserId === 'new') {
+        const result = await api('/api/users', 'POST', data);
+        if (result?.success) {
+          currentUserId = result.user.id;
+          showToast('User created!');
+          loadUsers();
+          selectUser(currentUserId);
+        }
+      } else {
+        const result = await api(`/api/users/${currentUserId}`, 'PUT', data);
+        if (result?.success) {
+          showToast('User saved!');
+          loadUsers();
+        }
+      }
+    }
+
+    async function deleteUser() {
+      if (!confirm('Delete this user and stop their bridge?')) return;
+
+      await api(`/api/users/${currentUserId}`, 'DELETE');
+      currentUserId = null;
+      document.getElementById('userEditor').style.display = 'none';
+      document.getElementById('emptyState').style.display = 'block';
+      loadUsers();
+      showToast('User deleted');
+    }
+
+    // ============ Bridge Control ============
+
+    async function startBridge() {
+      await saveUser();
+      const result = await api(`/api/users/${currentUserId}/start`, 'POST');
+      if (result?.success) {
+        showToast('Bridge started!');
+        setTimeout(() => selectUser(currentUserId), 1000);
+        loadUsers();
+      } else {
+        showToast(result?.error || 'Failed to start', true);
+      }
+    }
+
+    async function stopBridge() {
+      const result = await api(`/api/users/${currentUserId}/stop`, 'POST');
+      if (result?.success) {
+        showToast('Bridge stopped');
+        setTimeout(() => selectUser(currentUserId), 500);
+        loadUsers();
+      }
+    }
+
+    function updateButtons(status) {
+      const startBtn = document.getElementById('startBtn');
+      const stopBtn = document.getElementById('stopBtn');
+
+      if (status === 'running') {
+        startBtn.style.display = 'none';
+        stopBtn.style.display = 'inline-block';
+      } else {
+        startBtn.style.display = 'inline-block';
+        stopBtn.style.display = 'none';
+      }
+
+      if (status === 'new') {
+        startBtn.textContent = '💾 Create & Start';
+      } else {
+        startBtn.textContent = '▶️ Start';
+      }
+    }
+
+    // ============ Feeds ============
+
+    let currentFeeds = [];
+
+    function renderFeeds(feeds) {
+      currentFeeds = feeds;
+      const list = document.getElementById('feedList');
+
+      if (feeds.length === 0) {
+        list.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:1rem">No feeds</p>';
+        return;
+      }
+
+      list.innerHTML = feeds.map(f => `
+        <div class="feed-item">
+          <div>
+            <div class="title">${f.title}</div>
+            <div class="url">${f.url}</div>
+          </div>
+          <button class="btn-danger" style="padding:0.5rem" onclick="deleteFeed('${f.id}')">🗑️</button>
+        </div>
+      `).join('');
+    }
+
     async function addFeed() {
       const title = document.getElementById('feedTitle').value;
       const url = document.getElementById('feedUrl').value;
-      const category = document.getElementById('feedCategory').value || 'Uncategorized';
-      
+
       if (!title || !url) {
-        showToast('Please enter title and URL', true);
+        showToast('Title and URL required', true);
         return;
       }
-      
-      try {
-        const res = await fetch(`${API_URL}/api/feeds`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title, url, category })
-        });
-        const result = await res.json();
-        
+
+      if (currentUserId === 'new') {
+        showToast('Save user first', true);
+        return;
+      }
+
+      const result = await api(`/api/users/${currentUserId}/feeds`, 'POST', { title, url, category: 'News' });
+      if (result?.success) {
         document.getElementById('feedTitle').value = '';
         document.getElementById('feedUrl').value = '';
-        document.getElementById('feedCategory').value = '';
-        
-        loadFeeds();
-        showToast('Feed added successfully!');
-      } catch (error) {
-        showToast('Error adding feed', true);
+        selectUser(currentUserId);
+        showToast('Feed added');
       }
     }
-    
-    async function deleteFeed(id) {
-      if (!confirm('Are you sure you want to delete this feed?')) return;
-      
-      try {
-        await fetch(`${API_URL}/api/feeds/${id}`, { method: 'DELETE' });
-        loadFeeds();
-        showToast('Feed deleted');
-      } catch (error) {
-        showToast('Error deleting feed', true);
-      }
+
+    async function deleteFeed(feedId) {
+      await api(`/api/users/${currentUserId}/feeds/${feedId}`, 'DELETE');
+      selectUser(currentUserId);
+      showToast('Feed deleted');
     }
-    
-    function exportOPML() {
-      window.open(`${API_URL}/api/export/opml`, '_blank');
+
+    // ============ UI Helpers ============
+
+    function toggleBraveKey() {
+      const enabled = document.getElementById('userBraveEnabled').checked;
+      document.getElementById('braveKeyGroup').style.display = enabled ? 'block' : 'none';
     }
-    
+    document.getElementById('userBraveEnabled').addEventListener('change', toggleBraveKey);
+
     function showToast(message, isError = false) {
       const toast = document.getElementById('toast');
       toast.textContent = message;
@@ -419,10 +887,13 @@
       toast.classList.add('show');
       setTimeout(() => toast.classList.remove('show'), 3000);
     }
-    
-    // Load on page load
-    loadConfig();
-    loadFeeds();
+
+    // ============ Init ============
+
+    if (token) {
+      showApp();
+    }
   </script>
 </body>
+
 </html>

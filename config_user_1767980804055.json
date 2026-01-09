@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "rss-news": {
+      "command": "C:\\Users\\Administrator\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+      "args": [
+        "rss-server.py",
+        "--user",
+        "user_1767980804055"
+      ],
+      "transport": "stdio"
+    }
+  }
+}
