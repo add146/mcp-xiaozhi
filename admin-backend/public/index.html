@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MCP Admin Panel</title>
+  <style>
+    :root {
+      --bg-dark: #0f0f1a;
+      --bg-card: #1a1a2e;
+      --bg-input: #252538;
+      --accent: #6366f1;
+      --accent-hover: #818cf8;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --border: #333355;
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, var(--bg-dark) 0%, #1a1a3e 100%);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    
+    header h1 {
+      font-size: 2.5rem;
+      background: linear-gradient(135deg, var(--accent), #a855f7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+    }
+    
+    header p {
+      color: var(--text-muted);
+    }
+    
+    .card {
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    
+    .card h2 {
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .card h2::before {
+      content: '';
+      width: 4px;
+      height: 20px;
+      background: var(--accent);
+      border-radius: 2px;
+    }
+    
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+    
+    input, select {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 1rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+    
+    button {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-weight: 500;
+    }
+    
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+    
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+    }
+    
+    .btn-danger:hover {
+      background: #dc2626;
+    }
+    
+    .btn-secondary {
+      background: var(--bg-input);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    
+    .btn-secondary:hover {
+      background: var(--border);
+    }
+    
+    .feed-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    
+    .feed-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem;
+      background: var(--bg-input);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    
+    .feed-info h3 {
+      font-size: 1rem;
+      margin-bottom: 0.25rem;
+    }
+    
+    .feed-info p {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    
+    .feed-category {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      background: var(--accent);
+      border-radius: 4px;
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+    }
+    
+    .add-feed-form {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr auto;
+      gap: 0.75rem;
+      align-items: end;
+      margin-bottom: 1rem;
+    }
+    
+    @media (max-width: 768px) {
+      .add-feed-form {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      padding: 1rem 1.5rem;
+      background: var(--success);
+      color: white;
+      border-radius: 8px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.3s;
+      z-index: 1000;
+    }
+    
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    .status-connected {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: rgba(34, 197, 94, 0.2);
+      border: 1px solid var(--success);
+      border-radius: 8px;
+      color: var(--success);
+      font-size: 0.875rem;
+      margin-top: 1rem;
+    }
+    
+    .status-connected::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      background: var(--success);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    .actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🤖 MCP Admin Panel</h1>
+      <p>Configure your Xiaozhi MCP Bridge</p>
+    </header>
+    
+    <div class="card">
+      <h2>API Configuration</h2>
+      <div class="form-group">
+        <label for="braveApiKey">Brave Search API Key</label>
+        <input type="password" id="braveApiKey" placeholder="Enter your Brave API key...">
+      </div>
+      <div class="form-group">
+        <label for="mcpEndpoint">Xiaozhi MCP Endpoint URL</label>
+        <input type="text" id="mcpEndpoint" placeholder="wss://api.xiaozhi.me/mcp/?token=...">
+      </div>
+      <div class="actions">
+        <button class="btn-primary" onclick="saveConfig()">💾 Save Configuration</button>
+      </div>
+      <div class="status-connected" id="connectionStatus" style="display: none;">
+        Connected to Xiaozhi
+      </div>
+    </div>
+    
+    <div class="card">
+      <h2>RSS Feeds</h2>
+      <div class="add-feed-form">
+        <div class="form-group">
+          <label for="feedTitle">Feed Title</label>
+          <input type="text" id="feedTitle" placeholder="e.g. TechCrunch">
+        </div>
+        <div class="form-group">
+          <label for="feedUrl">RSS URL</label>
+          <input type="text" id="feedUrl" placeholder="https://example.com/feed">
+        </div>
+        <div class="form-group">
+          <label for="feedCategory">Category</label>
+          <input type="text" id="feedCategory" placeholder="e.g. Tech News">
+        </div>
+        <button class="btn-primary" onclick="addFeed()">+ Add</button>
+      </div>
+      <div class="feed-list" id="feedList">
+        <!-- Feeds will be loaded here -->
+      </div>
+      <div class="actions">
+        <button class="btn-secondary" onclick="exportOPML()">📥 Export OPML</button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="toast" id="toast"></div>
+  
+  <script>
+    const API_URL = '';
+    
+    async function loadConfig() {
+      try {
+        const res = await fetch(`${API_URL}/api/config`);
+        const config = await res.json();
+        document.getElementById('braveApiKey').value = config.braveApiKey || '';
+        document.getElementById('mcpEndpoint').value = config.mcpEndpoint || '';
+        
+        if (config.mcpEndpoint) {
+          document.getElementById('connectionStatus').style.display = 'inline-flex';
+        }
+      } catch (error) {
+        console.error('Error loading config:', error);
+      }
+    }
+    
+    async function saveConfig() {
+      const braveApiKey = document.getElementById('braveApiKey').value;
+      const mcpEndpoint = document.getElementById('mcpEndpoint').value;
+      
+      try {
+        const res = await fetch(`${API_URL}/api/config`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ braveApiKey, mcpEndpoint })
+        });
+        const result = await res.json();
+        showToast('Configuration saved successfully!');
+        
+        if (mcpEndpoint) {
+          document.getElementById('connectionStatus').style.display = 'inline-flex';
+        }
+      } catch (error) {
+        showToast('Error saving configuration', true);
+      }
+    }
+    
+    async function loadFeeds() {
+      try {
+        const res = await fetch(`${API_URL}/api/feeds`);
+        const feeds = await res.json();
+        renderFeeds(feeds);
+      } catch (error) {
+        console.error('Error loading feeds:', error);
+      }
+    }
+    
+    function renderFeeds(feeds) {
+      const list = document.getElementById('feedList');
+      if (feeds.length === 0) {
+        list.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 1rem;">No feeds added yet</p>';
+        return;
+      }
+      
+      list.innerHTML = feeds.map(feed => `
+        <div class="feed-item">
+          <div class="feed-info">
+            <h3>${feed.title}</h3>
+            <p>${feed.url}</p>
+            <span class="feed-category">${feed.category}</span>
+          </div>
+          <button class="btn-danger" onclick="deleteFeed('${feed.id}')">🗑️ Delete</button>
+        </div>
+      `).join('');
+    }
+    
+    async function addFeed() {
+      const title = document.getElementById('feedTitle').value;
+      const url = document.getElementById('feedUrl').value;
+      const category = document.getElementById('feedCategory').value || 'Uncategorized';
+      
+      if (!title || !url) {
+        showToast('Please enter title and URL', true);
+        return;
+      }
+      
+      try {
+        const res = await fetch(`${API_URL}/api/feeds`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, url, category })
+        });
+        const result = await res.json();
+        
+        document.getElementById('feedTitle').value = '';
+        document.getElementById('feedUrl').value = '';
+        document.getElementById('feedCategory').value = '';
+        
+        loadFeeds();
+        showToast('Feed added successfully!');
+      } catch (error) {
+        showToast('Error adding feed', true);
+      }
+    }
+    
+    async function deleteFeed(id) {
+      if (!confirm('Are you sure you want to delete this feed?')) return;
+      
+      try {
+        await fetch(`${API_URL}/api/feeds/${id}`, { method: 'DELETE' });
+        loadFeeds();
+        showToast('Feed deleted');
+      } catch (error) {
+        showToast('Error deleting feed', true);
+      }
+    }
+    
+    function exportOPML() {
+      window.open(`${API_URL}/api/export/opml`, '_blank');
+    }
+    
+    function showToast(message, isError = false) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.style.background = isError ? 'var(--danger)' : 'var(--success)';
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+    
+    // Load on page load
+    loadConfig();
+    loadFeeds();
+  </script>
+</body>
+</html>
