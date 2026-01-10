@@ -1,9 +1,10 @@
 """
-RSS MCP Server - Provides RSS tools for Xiaozhi
-Each configured feed appears as a separate tool in Enabled Services
+RSS MCP Server - Per-user RSS feeds
+Reads feeds from users.json based on --user argument
 """
 import json
 import os
+import sys
 from fastmcp import FastMCP
 import feedparser
 from typing import Optional
@@ -11,24 +12,32 @@ from typing import Optional
 # Initialize FastMCP server
 mcp = FastMCP("RSS News Server")
 
+# Get user ID from arguments
+USER_ID = None
+for i, arg in enumerate(sys.argv):
+    if arg == '--user' and i + 1 < len(sys.argv):
+        USER_ID = sys.argv[i + 1]
+        break
+
 # Config path
-CONFIG_PATH = os.path.join(os.path.dirname(__file__), "admin-backend", "config.json")
+USERS_PATH = os.path.join(os.path.dirname(__file__), "admin-backend", "users.json")
 
 def load_feeds():
-    """Load feeds from admin backend config"""
+    """Load feeds for specific user from users.json"""
     try:
-        if os.path.exists(CONFIG_PATH):
-            with open(CONFIG_PATH, 'r', encoding='utf-8') as f:
-                config = json.load(f)
-                return config.get('feeds', [])
+        if os.path.exists(USERS_PATH) and USER_ID:
+            with open(USERS_PATH, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                for user in data.get('users', []):
+                    if user.get('id') == USER_ID:
+                        feeds = user.get('feeds', [])
+                        if feeds:
+                            return feeds
     except Exception as e:
-        print(f"Error loading feeds: {e}")
+        print(f"Error loading feeds: {e}", file=sys.stderr)
     
-    # Default feeds if config not found
-    return [
-        {"id": "1", "title": "Hacker News", "url": "https://news.ycombinator.com/rss", "category": "Tech"},
-        {"id": "2", "title": "TechCrunch", "url": "https://techcrunch.com/feed/", "category": "Tech"}
-    ]
+    # Return empty if no feeds configured
+    return []
 
 
 def fetch_feed_articles(url: str, limit: int = 10) -> list:
@@ -47,13 +56,16 @@ def fetch_feed_articles(url: str, limit: int = 10) -> list:
         return []
 
 
-# Create a tool for each feed dynamically
+# Create tools for each feed dynamically
 feeds = load_feeds()
 
 for feed_config in feeds:
-    feed_title = feed_config['title']
-    feed_url = feed_config['url']
+    feed_title = feed_config.get('title', 'Unknown')
+    feed_url = feed_config.get('url', '')
     feed_category = feed_config.get('category', 'News')
+    
+    if not feed_url:
+        continue
     
     # Create safe function name from title
     safe_name = feed_title.lower().replace(' ', '_').replace('-', '_')
@@ -98,15 +110,19 @@ for feed_config in feeds:
 @mcp.tool()
 def rss_all_feeds(limit: int = 5) -> str:
     """
-    Get latest news from ALL configured RSS feeds.
+    Get latest news from ALL your configured RSS feeds.
     
     Args:
         limit: Number of articles per feed (default 5)
     
     Returns:
-        Latest articles from all feeds
+        Latest articles from all your feeds
     """
     feeds = load_feeds()
+    
+    if not feeds:
+        return "No RSS feeds configured. Add feeds via admin panel."
+    
     all_articles = []
     
     for feed_config in feeds:
@@ -129,17 +145,17 @@ def rss_all_feeds(limit: int = 5) -> str:
 @mcp.tool()
 def rss_list_sources() -> str:
     """
-    List all configured RSS feed sources.
+    List all your configured RSS feed sources.
     
     Returns:
-        List of all RSS feeds with their names and categories
+        List of all your RSS feeds with their names and categories
     """
     feeds = load_feeds()
     
     if not feeds:
-        return "No RSS feeds configured. Add feeds via admin panel at http://localhost:3000"
+        return "No RSS feeds configured. Add feeds via admin panel."
     
-    result = "📋 Available RSS Sources:\n\n"
+    result = "📋 Your RSS Sources:\n\n"
     for feed in feeds:
         result += f"• **{feed['title']}** ({feed.get('category', 'General')})\n"
     
