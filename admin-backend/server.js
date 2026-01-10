@@ -72,11 +72,15 @@ function generateUserConfig(user) {
     const configPath = path.join(BRIDGE_PATH, `config_${user.id}.json`);
     const mcpServers = {};
 
-    // Brave Search (if enabled and has API key)
+    // Brave Search (if enabled and has API key) - uses stdio with per-user API key
     if (user.braveEnabled && user.braveApiKey) {
         mcpServers['brave-search'] = {
-            url: 'http://localhost:8080/sse',
-            transport: 'sse'
+            command: PYTHON_PATH,
+            args: ['brave-search.py'],
+            transport: 'stdio',
+            env: {
+                BRAVE_API_KEY: user.braveApiKey
+            }
         };
     }
 
