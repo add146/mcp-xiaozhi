@@ -11,7 +11,9 @@ const PORT = 3000;
 const JWT_SECRET = 'mcp-admin-secret-key-change-in-production';
 const ADMIN_PATH = path.join(__dirname, 'admin.json');
 const USERS_PATH = path.join(__dirname, 'users.json');
-const PYTHON_PATH = 'C:\\Users\\Administrator\\AppData\\Local\\Programs\\Python\\Python313\\python.exe';
+const PYTHON_PATH = process.platform === 'win32'
+    ? 'C:\\Users\\Administrator\\AppData\\Local\\Programs\\Python\\Python313\\python.exe'
+    : '/usr/bin/python3';
 const BRIDGE_PATH = path.join(__dirname, '..');
 
 app.use(cors());
