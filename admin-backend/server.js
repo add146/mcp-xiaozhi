@@ -5,7 +5,6 @@ const path = require('path');
 const { spawn, exec } = require('child_process');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const multer = require('multer');
 
 const app = express();
 const PORT = 3000;
@@ -102,15 +101,6 @@ function generateUserConfig(user) {
         args: ['rss-server.py', '--user', user.id],
         transport: 'stdio'
     };
-
-    // Knowledge Base (if enabled)
-    if (user.knowledgeEnabled) {
-        mcpServers['knowledge'] = {
-            command: PYTHON_PATH,
-            args: ['knowledge-server.py', '--user', user.id],
-            transport: 'stdio'
-        };
-    }
 
     fs.writeFileSync(configPath, JSON.stringify({ mcpServers }, null, 2));
     return configPath;
@@ -264,7 +254,6 @@ app.post('/api/users', authMiddleware, (req, res) => {
         braveEnabled: braveEnabled || false,
         braveApiKey: braveApiKey || '',
         weatherEnabled: weatherEnabled || false,
-        knowledgeEnabled: req.body.knowledgeEnabled || false,
         feeds: feeds || [],
         status: 'stopped',
         pid: null,
@@ -296,14 +285,13 @@ app.put('/api/users/:id', authMiddleware, async (req, res) => {
         return res.status(404).json({ error: 'User not found' });
     }
 
-    const { name, mcpEndpoint, braveEnabled, braveApiKey, weatherEnabled, knowledgeEnabled, feeds } = req.body;
+    const { name, mcpEndpoint, braveEnabled, braveApiKey, weatherEnabled, feeds } = req.body;
 
     if (name !== undefined) data.users[idx].name = name;
     if (mcpEndpoint !== undefined) data.users[idx].mcpEndpoint = mcpEndpoint;
     if (braveEnabled !== undefined) data.users[idx].braveEnabled = braveEnabled;
     if (braveApiKey !== undefined) data.users[idx].braveApiKey = braveApiKey;
     if (weatherEnabled !== undefined) data.users[idx].weatherEnabled = weatherEnabled;
-    if (knowledgeEnabled !== undefined) data.users[idx].knowledgeEnabled = knowledgeEnabled;
     if (feeds !== undefined) data.users[idx].feeds = feeds;
 
     writeUsers(data);
@@ -426,90 +414,6 @@ app.delete('/api/users/:id/feeds/:feedId', authMiddleware, (req, res) => {
     writeUsers(data);
 
     res.json({ success: true, message: 'Feed deleted' });
-});
-
-// ============ Documents (Knowledge Base) ============
-
-const DOCS_DIR = path.join(__dirname, '..', 'documents');
-
-// Ensure documents directory exists
-if (!fs.existsSync(DOCS_DIR)) {
-    fs.mkdirSync(DOCS_DIR, { recursive: true });
-}
-
-// Storage config for multer
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const userDir = path.join(DOCS_DIR, req.params.id);
-        if (!fs.existsSync(userDir)) {
-            fs.mkdirSync(userDir, { recursive: true });
-        }
-        cb(null, userDir);
-    },
-    filename: (req, file, cb) => {
-        // Keep original filename
-        cb(null, file.originalname);
-    }
-});
-
-const upload = multer({
-    storage,
-    limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
-    fileFilter: (req, file, cb) => {
-        const allowed = ['.pdf', '.doc', '.docx', '.txt'];
-        const ext = path.extname(file.originalname).toLowerCase();
-        if (allowed.includes(ext)) {
-            cb(null, true);
-        } else {
-            cb(new Error('Invalid file type. Allowed: PDF, DOC, DOCX, TXT'));
-        }
-    }
-});
-
-// Upload document
-app.post('/api/users/:id/documents', authMiddleware, upload.single('file'), (req, res) => {
-    if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded' });
-    }
-    res.json({
-        success: true,
-        filename: req.file.originalname,
-        size: req.file.size
-    });
-});
-
-// List documents
-app.get('/api/users/:id/documents', authMiddleware, (req, res) => {
-    const userDir = path.join(DOCS_DIR, req.params.id);
-
-    if (!fs.existsSync(userDir)) {
-        return res.json({ documents: [] });
-    }
-
-    const files = fs.readdirSync(userDir).map(filename => {
-        const filepath = path.join(userDir, filename);
-        const stats = fs.statSync(filepath);
-        return {
-            filename,
-            size: stats.size,
-            uploadedAt: stats.mtime
-        };
-    });
-
-    res.json({ documents: files });
-});
-
-// Delete document
-app.delete('/api/users/:id/documents/:filename', authMiddleware, (req, res) => {
-    const userDir = path.join(DOCS_DIR, req.params.id);
-    const filepath = path.join(userDir, req.params.filename);
-
-    if (!fs.existsSync(filepath)) {
-        return res.status(404).json({ error: 'Document not found' });
-    }
-
-    fs.unlinkSync(filepath);
-    res.json({ success: true, message: 'Document deleted' });
 });
 
 // ============ Start Server ============

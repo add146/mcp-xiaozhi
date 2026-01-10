@@ -538,26 +538,6 @@
           <div class="feed-list" id="feedList"></div>
         </div>
 
-        <div class="card">
-          <h2>📚 Knowledge Base</h2>
-          <div class="toggle-row">
-            <span>Enable Knowledge Base</span>
-            <label class="toggle-switch">
-              <input type="checkbox" id="userKnowledgeEnabled">
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-          <div id="knowledgeSection" style="margin-top:1rem;">
-            <div style="display:flex;gap:0.5rem;margin-bottom:1rem;">
-              <input type="file" id="docFile" accept=".pdf,.doc,.docx,.txt" style="flex:1">
-              <button class="btn-primary" onclick="uploadDocument()">📤 Upload</button>
-            </div>
-            <div class="feed-list" id="docList">
-              <p style="color:var(--text-muted);text-align:center;">No documents uploaded</p>
-            </div>
-          </div>
-        </div>
-
         <div class="actions">
           <button class="btn-primary" onclick="saveUser()">💾 Save</button>
           <button class="btn-success" id="startBtn" onclick="startBridge()">▶️ Start</button>
@@ -730,11 +710,9 @@
       document.getElementById('userBraveEnabled').checked = user.braveEnabled;
       document.getElementById('userBraveKey').value = user.braveApiKey || '';
       document.getElementById('userWeatherEnabled').checked = user.weatherEnabled;
-      document.getElementById('userKnowledgeEnabled').checked = user.knowledgeEnabled || false;
 
       toggleBraveKey();
       renderFeeds(user.feeds || []);
-      loadDocuments();
       updateButtons(user.status);
     }
 
@@ -749,11 +727,9 @@
       document.getElementById('userBraveEnabled').checked = false;
       document.getElementById('userBraveKey').value = '';
       document.getElementById('userWeatherEnabled').checked = false;
-      document.getElementById('userKnowledgeEnabled').checked = false;
 
       toggleBraveKey();
       renderFeeds([]);
-      document.getElementById('docList').innerHTML = '<p style="color:var(--text-muted);text-align:center;">No documents uploaded</p>';
       updateButtons('new');
 
       renderUserList();
@@ -765,8 +741,7 @@
         mcpEndpoint: document.getElementById('userEndpoint').value,
         braveEnabled: document.getElementById('userBraveEnabled').checked,
         braveApiKey: document.getElementById('userBraveKey').value,
-        weatherEnabled: document.getElementById('userWeatherEnabled').checked,
-        knowledgeEnabled: document.getElementById('userKnowledgeEnabled').checked
+        weatherEnabled: document.getElementById('userWeatherEnabled').checked
       };
 
       if (!data.name) {
@@ -911,80 +886,6 @@
       toast.style.background = isError ? 'var(--danger)' : 'var(--success)';
       toast.classList.add('show');
       setTimeout(() => toast.classList.remove('show'), 3000);
-    }
-
-    // ============ Documents (Knowledge Base) ============
-
-    async function loadDocuments() {
-      if (!currentUserId || currentUserId === 'new') return;
-
-      const result = await api(`/api/users/${currentUserId}/documents`);
-      if (!result) return;
-
-      const docs = result.documents || [];
-      const list = document.getElementById('docList');
-
-      if (docs.length === 0) {
-        list.innerHTML = '<p style="color:var(--text-muted);text-align:center;">No documents uploaded</p>';
-        return;
-      }
-
-      list.innerHTML = docs.map(d => `
-        <div class="feed-item">
-          <div>
-            <div class="title">📄 ${d.filename}</div>
-            <div class="url">${(d.size / 1024).toFixed(1)} KB</div>
-          </div>
-          <button class="btn-danger" style="padding:0.5rem" onclick="deleteDocument('${d.filename}')">🗑️</button>
-        </div>
-      `).join('');
-    }
-
-    async function uploadDocument() {
-      if (!currentUserId || currentUserId === 'new') {
-        showToast('Save user first', true);
-        return;
-      }
-
-      const fileInput = document.getElementById('docFile');
-      if (!fileInput.files.length) {
-        showToast('Select a file', true);
-        return;
-      }
-
-      const formData = new FormData();
-      formData.append('file', fileInput.files[0]);
-
-      try {
-        const res = await fetch(`/api/users/${currentUserId}/documents`, {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${token}` },
-          body: formData
-        });
-
-        const result = await res.json();
-        if (result.success) {
-          showToast('Document uploaded!');
-          fileInput.value = '';
-          loadDocuments();
-        } else {
-          showToast(result.error || 'Upload failed', true);
-        }
-      } catch (e) {
-        showToast('Upload error', true);
-      }
-    }
-
-    async function deleteDocument(filename) {
-      if (!confirm(`Delete ${filename}?`)) return;
-
-      const result = await api(`/api/users/${currentUserId}/documents/${encodeURIComponent(filename)}`, 'DELETE');
-      if (result?.success) {
-        showToast('Document deleted');
-        loadDocuments();
-      } else {
-        showToast('Delete failed', true);
-      }
     }
 
     // ============ Init ============
