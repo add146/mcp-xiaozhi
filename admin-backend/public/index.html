@@ -410,6 +410,153 @@
       font-size: 1.5rem;
       cursor: pointer;
     }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+      .app-container.active {
+        flex-direction: column;
+      }
+
+      .sidebar {
+        width: 100%;
+        height: auto;
+        max-height: 40vh;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .sidebar-header {
+        padding: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .sidebar-header h2 {
+        font-size: 1rem;
+      }
+
+      .sidebar-header p {
+        display: none;
+      }
+
+      .user-list {
+        padding: 0.5rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        overflow-x: auto;
+      }
+
+      .user-item {
+        flex: 1 1 calc(50% - 0.5rem);
+        min-width: 140px;
+        margin-bottom: 0;
+        padding: 0.5rem;
+      }
+
+      .user-item .name {
+        font-size: 0.875rem;
+      }
+
+      .add-user-btn {
+        margin: 0.5rem;
+        padding: 0.5rem;
+        font-size: 0.875rem;
+      }
+
+      .main-content {
+        padding: 1rem;
+        height: auto;
+        overflow-y: visible;
+      }
+
+      .main-content h1 {
+        font-size: 1.25rem;
+        margin-bottom: 1rem;
+      }
+
+      .card {
+        padding: 1rem;
+        margin-bottom: 1rem;
+      }
+
+      .card h2 {
+        font-size: 1rem;
+      }
+
+      .toggle-row {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+
+      .actions {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .actions button {
+        flex: 1 1 calc(50% - 0.5rem);
+        min-width: 120px;
+      }
+
+      .header-btns {
+        position: static;
+        margin-bottom: 1rem;
+        justify-content: flex-end;
+      }
+
+      .empty-state {
+        padding: 2rem 1rem;
+      }
+
+      .empty-state h2 {
+        font-size: 1.25rem;
+      }
+
+      input[type="text"],
+      input[type="password"],
+      input[type="file"] {
+        font-size: 16px;
+        /* Prevent zoom on iOS */
+      }
+
+      .modal-box {
+        margin: 1rem;
+        padding: 1.5rem;
+      }
+
+      .feed-item {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+
+      .feed-item>div {
+        flex: 1 1 100%;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .sidebar {
+        max-height: 35vh;
+      }
+
+      .user-item {
+        flex: 1 1 100%;
+      }
+
+      .actions button {
+        flex: 1 1 100%;
+      }
+
+      .login-box {
+        padding: 1.5rem;
+      }
+
+      .login-box h1 {
+        font-size: 1.25rem;
+      }
+    }
   </style>
 </head>
 
